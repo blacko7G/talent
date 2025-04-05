@@ -401,8 +401,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: 'Video not found' });
       }
       // Increment views
-      await storage.updateVideoStats(id, video.views + 1);
-      res.status(200).json({ video: { ...video, views: video.views + 1 } });
+      await storage.updateVideoStats(id, (video.views ?? 0) + 1);
+      res.status(200).json({ video: { ...video, views: (video.views ?? 0) + 1 } });
     } catch (error) {
       res.status(500).json({ message: 'Server error' });
     }
@@ -451,7 +451,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!video) {
         return res.status(404).json({ message: 'Video not found' });
       }
-      const updatedVideo = await storage.updateVideoStats(id, undefined, video.likes + 1);
+      const updatedVideo = await storage.updateVideoStats(id, undefined, (video.likes ?? 0) + 1);
       res.status(200).json({ video: updatedVideo });
     } catch (error) {
       res.status(500).json({ message: 'Server error' });
@@ -651,7 +651,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         } else {
           const conversation = conversations.get(partnerId);
           // Update last message if this one is newer
-          if (message.createdAt > conversation.lastMessage.createdAt) {
+          if (message.createdAt && message.createdAt > conversation.lastMessage.createdAt) {
             conversation.lastMessage = message;
           }
           // Count unread messages
