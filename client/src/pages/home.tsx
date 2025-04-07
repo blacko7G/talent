@@ -13,7 +13,7 @@ export default function Home() {
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center">
               <FaFutbol className="text-primary text-xl mr-2" />
-              <span className="font-bold text-xl text-gray-800">Scout<span className="text-primary">Pro</span></span>
+              <span className="font-bold text-xl text-gray-800">Naija<span className="text-primary">Talent</span></span>
             </div>
             <div className="hidden md:flex items-center space-x-4">
               <Link href="/features" className="text-gray-700 hover:text-primary px-3 py-2 text-sm font-medium">
@@ -62,26 +62,26 @@ export default function Home() {
               <div className="bg-gray-50 p-8 rounded-xl">
                 <div className="flex items-center mb-4">
                   <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold">
-                    DJ
+                    AO
                   </div>
                   <div className="ml-4">
-                    <h4 className="font-bold">David Johnson</h4>
+                    <h4 className="font-bold">Ahmed Okafor</h4>
                     <p className="text-sm text-gray-600">Professional Player</p>
                   </div>
                 </div>
                 <p className="text-gray-700">
-                  "This platform helped me get discovered by a top academy in the UK. The video highlights feature was especially useful in showcasing my skills."
+                  "This platform helped me get discovered by a top academy in Lagos. The video highlights feature was especially useful in showcasing my skills."
                 </p>
               </div>
 
               <div className="bg-gray-50 p-8 rounded-xl">
                 <div className="flex items-center mb-4">
                   <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold">
-                    JW
+                    IB
                   </div>
                   <div className="ml-4">
-                    <h4 className="font-bold">John Williams</h4>
-                    <p className="text-sm text-gray-600">Scout, Arsenal FC</p>
+                    <h4 className="font-bold">Ibrahim Babangida</h4>
+                    <p className="text-sm text-gray-600">Scout, Enyimba FC</p>
                   </div>
                 </div>
                 <p className="text-gray-700">
@@ -92,11 +92,11 @@ export default function Home() {
               <div className="bg-gray-50 p-8 rounded-xl">
                 <div className="flex items-center mb-4">
                   <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold">
-                    CA
+                    KA
                   </div>
                   <div className="ml-4">
-                    <h4 className="font-bold">Chelsea Academy</h4>
-                    <p className="text-sm text-gray-600">Premier League</p>
+                    <h4 className="font-bold">Kano Pillars Academy</h4>
+                    <p className="text-sm text-gray-600">NPFL</p>
                   </div>
                 </div>
                 <p className="text-gray-700">
@@ -112,7 +112,7 @@ export default function Home() {
           <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
             <h2 className="text-3xl md:text-4xl font-bold mb-6">Ready to Elevate Your Football Journey?</h2>
             <p className="text-xl opacity-90 mb-8">
-              Join thousands of players, scouts, and academies on our platform today.
+              Join thousands of Nigerian players, scouts, and academies on our platform today.
             </p>
             <div className="flex flex-wrap justify-center gap-4">
               <Button size="lg" className="bg-white text-primary hover:bg-gray-100" asChild>
@@ -133,10 +133,10 @@ export default function Home() {
             <div>
               <div className="flex items-center mb-4">
                 <FaFutbol className="text-white text-xl mr-2" />
-                <span className="font-bold text-xl">Scout<span className="text-secondary">Pro</span></span>
+                <span className="font-bold text-xl">Naija<span className="text-secondary">Talent</span></span>
               </div>
               <p className="text-gray-400">
-                Connecting football talent with opportunities worldwide.
+                Connecting Nigerian football talent with opportunities worldwide.
               </p>
               <div className="flex space-x-4 mt-4">
                 <a href="#" className="text-gray-400 hover:text-white">
@@ -186,7 +186,7 @@ export default function Home() {
           </div>
 
           <div className="mt-12 pt-8 border-t border-gray-800 text-gray-400 text-sm text-center">
-            <p>&copy; {new Date().getFullYear()} ScoutPro. All rights reserved.</p>
+            <p>&copy; {new Date().getFullYear()} NaijaTalent. All rights reserved.</p>
           </div>
         </div>
       </footer>

@@ -1,62 +1,56 @@
-import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
-import { FaUserGraduate, FaSearch, FaBuilding } from "react-icons/fa";
+import { Button } from "@/components/ui/button";
+import { FaFutbol, FaSearch, FaGraduationCap } from "react-icons/fa";
 
 export default function HeroBanner() {
   return (
-    <div className="relative overflow-hidden bg-gradient-to-br from-primary to-secondary text-white">
-      <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxwYXRoIGZpbGw9IiMwMDYwMzUiIGZpbGwtb3BhY2l0eT0iLjAzIiBkPSJNMCAwaDYwdjYwSDB6Ii8+PHBhdGggZD0iTTYwIDMwQzYwIDEzLjQzMSA0Ni41NjkgMCAzMCAwIDEzLjQzMSAwIDAgMTMuNDMxIDAgMzBjMCAxNi41NjkgMTMuNDMxIDMwIDMwIDMwIDE2LjU2OSAwIDMwLTEzLjQzMSAzMC0zMHoiIHN0cm9rZT0iIzAwODA0MCIgc3Ryb2tlLW9wYWNpdHk9Ii4wNSIvPjwvZz48L3N2Zz4=')] opacity-20"></div>
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 md:py-32 relative z-10">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
-          <div>
-            <h1 className="text-4xl md:text-5xl font-bold mb-6">Football Scouting Platform</h1>
-            <p className="text-xl md:text-2xl opacity-90 mb-8">
-              Connecting players, scouts, and academies to elevate football talent worldwide
-            </p>
-            <div className="flex flex-wrap gap-4">
-              <Button size="lg" className="bg-white text-primary hover:bg-gray-100" asChild>
-                <Link href="/register">Get Started</Link>
-              </Button>
-              <Button size="lg" variant="outline" className="text-white border-white hover:bg-white/10" asChild>
-                <Link href="/login">Sign In</Link>
-              </Button>
-            </div>
-          </div>
+    <div className="relative bg-gradient-to-r from-green-600 to-green-800 overflow-hidden">
+      <div className="absolute inset-0">
+        <div className="absolute inset-0 bg-black opacity-50"></div>
+        <div className="absolute inset-0 bg-[url('/images/nigeria-stadium.jpg')] bg-cover bg-center"></div>
+      </div>
+      
+      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24 md:py-32">
+        <div className="text-center">
+          <h1 className="text-4xl md:text-6xl font-bold text-white mb-6">
+            Discover Nigeria's Next Football Stars
+          </h1>
+          <p className="text-xl md:text-2xl text-white/90 mb-8 max-w-3xl mx-auto">
+            The premier platform connecting Nigerian football talent with scouts and academies worldwide.
+          </p>
           
-          <div className="hidden md:block">
-            <div className="bg-white/10 rounded-xl p-8 backdrop-blur-sm">
-              <h2 className="text-2xl font-bold mb-6">Join as:</h2>
-              <div className="space-y-6">
-                <div className="flex items-center">
-                  <div className="bg-white/20 p-3 rounded-full mr-4">
-                    <FaUserGraduate className="h-6 w-6" />
-                  </div>
-                  <div>
-                    <h3 className="text-xl font-medium">Player</h3>
-                    <p className="opacity-90">Showcase your skills to scouts worldwide</p>
-                  </div>
-                </div>
-                
-                <div className="flex items-center">
-                  <div className="bg-white/20 p-3 rounded-full mr-4">
-                    <FaSearch className="h-6 w-6" />
-                  </div>
-                  <div>
-                    <h3 className="text-xl font-medium">Scout</h3>
-                    <p className="opacity-90">Discover hidden talent and manage recruitment</p>
-                  </div>
-                </div>
-                
-                <div className="flex items-center">
-                  <div className="bg-white/20 p-3 rounded-full mr-4">
-                    <FaBuilding className="h-6 w-6" />
-                  </div>
-                  <div>
-                    <h3 className="text-xl font-medium">Academy</h3>
-                    <p className="opacity-90">Post trials and manage player development</p>
-                  </div>
-                </div>
+          <div className="flex flex-wrap justify-center gap-4 mb-12">
+            <Button size="lg" className="bg-white text-green-600 hover:bg-gray-100" asChild>
+              <Link href="/register">Join Now</Link>
+            </Button>
+            <Button size="lg" variant="outline" className="text-white border-white hover:bg-white/10" asChild>
+              <Link href="/discover">Discover Talent</Link>
+            </Button>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-4xl mx-auto">
+            <div className="bg-white/10 backdrop-blur-sm rounded-lg p-6 text-white">
+              <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                <FaFutbol className="text-2xl" />
               </div>
+              <h3 className="font-bold text-lg mb-2">Players</h3>
+              <p className="text-white/80">Showcase your skills and get discovered by top clubs</p>
+            </div>
+            
+            <div className="bg-white/10 backdrop-blur-sm rounded-lg p-6 text-white">
+              <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                <FaSearch className="text-2xl" />
+              </div>
+              <h3 className="font-bold text-lg mb-2">Scouts</h3>
+              <p className="text-white/80">Find the best Nigerian talent for your club</p>
+            </div>
+            
+            <div className="bg-white/10 backdrop-blur-sm rounded-lg p-6 text-white">
+              <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                <FaGraduationCap className="text-2xl" />
+              </div>
+              <h3 className="font-bold text-lg mb-2">Academies</h3>
+              <p className="text-white/80">Connect with promising young players</p>
             </div>
           </div>
         </div>

@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useForm } from "react-hook-form";
+import { useState, useEffect } from "react";
+import { useForm, UseFormReturn } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -52,7 +52,7 @@ export default function Profile() {
   });
 
   // Fetch the appropriate profile based on user role
-  const { data: profileData, isLoading: isProfileLoading } = useQuery({
+  const { data: profileData, isLoading: isProfileLoading } = useQuery<{ profile: any }>({
     queryKey: [`/api/profiles/${user?.role}/${user?.id}`],
     enabled: !!user?.id,
   });
@@ -62,14 +62,24 @@ export default function Profile() {
   if (user?.role === USER_ROLES.PLAYER) {
     formSchema = z.object({
       position: z.string().min(1, "Position is required"),
-      age: z.preprocess(
-        (val) => parseInt(String(val), 10) || 0,
-        z.number().min(10).max(50)
-      ),
+      age: z.number().min(10).max(50),
       location: z.string().min(1, "Location is required"),
       bio: z.string().optional(),
       achievements: z.string().optional(),
-      stats: playerStatsSchema,
+      organization: z.string().optional(),
+      yearsOfExperience: z.number().optional(),
+      name: z.string().optional(),
+      foundedYear: z.number().optional(),
+      website: z.string().url().optional(),
+      description: z.string().optional(),
+      stats: z.object({
+        pace: z.number().min(0).max(100),
+        shooting: z.number().min(0).max(100),
+        passing: z.number().min(0).max(100),
+        dribbling: z.number().min(0).max(100),
+        defense: z.number().min(0).max(100),
+        physical: z.number().min(0).max(100),
+      }).optional(),
     });
   } else if (user?.role === USER_ROLES.SCOUT) {
     formSchema = z.object({
@@ -96,12 +106,52 @@ export default function Profile() {
     formSchema = z.object({});
   }
 
-  type FormValues = z.infer<typeof formSchema>;
+  type FormValues = {
+    position?: string;
+    age?: number;
+    location?: string;
+    bio?: string;
+    achievements?: string;
+    organization?: string;
+    yearsOfExperience?: number;
+    name?: string;
+    foundedYear?: number;
+    website?: string;
+    description?: string;
+    stats?: {
+      pace: number;
+      shooting: number;
+      passing: number;
+      dribbling: number;
+      defense: number;
+      physical: number;
+    };
+  };
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
-    defaultValues: getDefaultValues(),
-  });
+    defaultValues: {
+      position: "",
+      age: 18,
+      location: "",
+      bio: "",
+      achievements: "",
+      organization: "",
+      yearsOfExperience: 0,
+      name: "",
+      foundedYear: new Date().getFullYear() - 10,
+      website: "",
+      description: "",
+      stats: {
+        pace: 50,
+        shooting: 50,
+        passing: 50,
+        dribbling: 50,
+        defense: 50,
+        physical: 50,
+      },
+    },
+  }) as UseFormReturn<FormValues>;
 
   // Set form values when profile data is loaded
   useEffect(() => {
@@ -118,6 +168,12 @@ export default function Profile() {
         location: profile?.location || "",
         bio: profile?.bio || "",
         achievements: profile?.achievements || "",
+        organization: profile?.organization || "",
+        yearsOfExperience: profile?.yearsOfExperience || 0,
+        name: profile?.name || "",
+        foundedYear: profile?.foundedYear || new Date().getFullYear() - 10,
+        website: profile?.website || "",
+        description: profile?.description || "",
         stats: {
           pace: profile?.stats?.pace || 50,
           shooting: profile?.stats?.shooting || 50,

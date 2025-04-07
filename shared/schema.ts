@@ -1,4 +1,4 @@
-import { pgTable, text, serial, integer, boolean, timestamp, json } from "drizzle-orm/pg-core";
+import { sqliteTable, text, integer } from "drizzle-orm/sqlite-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -12,25 +12,31 @@ export const USER_ROLES = {
 export type UserRole = typeof USER_ROLES[keyof typeof USER_ROLES];
 
 // Users table
-export const users = pgTable("users", {
-  id: serial("id").primaryKey(),
+export const users = sqliteTable("users", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
   email: text("email").notNull().unique(),
   password: text("password").notNull(),
   firstName: text("first_name").notNull(),
   lastName: text("last_name").notNull(),
   role: text("role").$type<UserRole>().notNull(),
   profileImage: text("profile_image"),
-  createdAt: timestamp("created_at").defaultNow(),
+  createdAt: integer("created_at", { mode: "timestamp" }).$defaultFn(() => new Date()),
 });
 
-export const insertUserSchema = createInsertSchema(users).omit({
-  id: true,
-  createdAt: true,
+// Simplified user schema for registration
+export const insertUserSchema = createInsertSchema(users, {
+  id: z.number().optional(),
+  createdAt: z.date().optional(),
+  role: z.enum([USER_ROLES.PLAYER, USER_ROLES.SCOUT, USER_ROLES.ACADEMY]).optional(),
+  email: z.string().email("Invalid email address"),
+  password: z.string().min(6, "Password must be at least 6 characters"),
+  firstName: z.string().min(1, "First name is required"),
+  lastName: z.string().min(1, "Last name is required"),
 });
 
 // Player profiles
-export const playerProfiles = pgTable("player_profiles", {
-  id: serial("id").primaryKey(),
+export const playerProfiles = sqliteTable("player_profiles", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
   userId: integer("user_id").notNull().references(() => users.id),
   position: text("position"),
   age: integer("age"),
@@ -40,49 +46,49 @@ export const playerProfiles = pgTable("player_profiles", {
   overallRating: integer("overall_rating"),
   appearances: integer("appearances"),
   goals: integer("goals"),
-  isEliteProspect: boolean("is_elite_prospect").default(false),
-  isVerified: boolean("is_verified").default(false),
-  stats: json("stats").$type<PlayerStats>(),
+  isEliteProspect: integer("is_elite_prospect", { mode: "boolean" }).default(false),
+  isVerified: integer("is_verified", { mode: "boolean" }).default(false),
+  stats: text("stats", { mode: "json" }).$type<PlayerStats | null>(),
 });
 
-export const insertPlayerProfileSchema = createInsertSchema(playerProfiles).omit({
-  id: true,
+export const insertPlayerProfileSchema = createInsertSchema(playerProfiles, {
+  id: z.number().optional(),
 });
 
 // Scout profiles
-export const scoutProfiles = pgTable("scout_profiles", {
-  id: serial("id").primaryKey(),
+export const scoutProfiles = sqliteTable("scout_profiles", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
   userId: integer("user_id").notNull().references(() => users.id),
   organization: text("organization"),
   position: text("position"),
   bio: text("bio"),
   yearsOfExperience: integer("years_of_experience"),
-  isVerified: boolean("is_verified").default(false),
+  isVerified: integer("is_verified", { mode: "boolean" }).default(false),
 });
 
-export const insertScoutProfileSchema = createInsertSchema(scoutProfiles).omit({
-  id: true,
+export const insertScoutProfileSchema = createInsertSchema(scoutProfiles, {
+  id: z.number().optional(),
 });
 
 // Academy profiles
-export const academyProfiles = pgTable("academy_profiles", {
-  id: serial("id").primaryKey(),
+export const academyProfiles = sqliteTable("academy_profiles", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
   userId: integer("user_id").notNull().references(() => users.id),
   name: text("name").notNull(),
   location: text("location"),
   description: text("description"),
   foundedYear: integer("founded_year"),
   website: text("website"),
-  isVerified: boolean("is_verified").default(false),
+  isVerified: integer("is_verified", { mode: "boolean" }).default(false),
 });
 
-export const insertAcademyProfileSchema = createInsertSchema(academyProfiles).omit({
-  id: true,
+export const insertAcademyProfileSchema = createInsertSchema(academyProfiles, {
+  id: z.number().optional(),
 });
 
 // Videos/Highlights
-export const videos = pgTable("videos", {
-  id: serial("id").primaryKey(),
+export const videos = sqliteTable("videos", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
   userId: integer("user_id").notNull().references(() => users.id),
   title: text("title").notNull(),
   description: text("description"),
@@ -91,82 +97,82 @@ export const videos = pgTable("videos", {
   duration: integer("duration"),
   views: integer("views").default(0),
   likes: integer("likes").default(0),
-  createdAt: timestamp("created_at").defaultNow(),
+  createdAt: integer("created_at", { mode: "timestamp" }).$defaultFn(() => new Date()),
 });
 
-export const insertVideoSchema = createInsertSchema(videos).omit({
-  id: true,
-  views: true,
-  likes: true,
-  createdAt: true,
+export const insertVideoSchema = createInsertSchema(videos, {
+  id: z.number().optional(),
+  views: z.number().optional(),
+  likes: z.number().optional(),
+  createdAt: z.date().optional(),
 });
 
 // Trials
-export const trials = pgTable("trials", {
-  id: serial("id").primaryKey(),
+export const trials = sqliteTable("trials", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
   creatorId: integer("creator_id").notNull().references(() => users.id),
   title: text("title").notNull(),
   organization: text("organization").notNull(),
   position: text("position"),
   ageGroup: text("age_group"),
   location: text("location").notNull(),
-  date: timestamp("date").notNull(),
+  date: integer("date", { mode: "timestamp" }).notNull(),
   description: text("description"),
   requirements: text("requirements"),
   imageUrl: text("image_url"),
-  createdAt: timestamp("created_at").defaultNow(),
+  createdAt: integer("created_at", { mode: "timestamp" }).$defaultFn(() => new Date()),
 });
 
-export const insertTrialSchema = createInsertSchema(trials).omit({
-  id: true,
-  createdAt: true,
+export const insertTrialSchema = createInsertSchema(trials, {
+  id: z.number().optional(),
+  createdAt: z.date().optional(),
 });
 
 // Trial applications
-export const trialApplications = pgTable("trial_applications", {
-  id: serial("id").primaryKey(),
+export const trialApplications = sqliteTable("trial_applications", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
   trialId: integer("trial_id").notNull().references(() => trials.id),
   playerId: integer("player_id").notNull().references(() => users.id),
   status: text("status").default("pending"),
   message: text("message"),
-  createdAt: timestamp("created_at").defaultNow(),
+  createdAt: integer("created_at", { mode: "timestamp" }).$defaultFn(() => new Date()),
 });
 
-export const insertTrialApplicationSchema = createInsertSchema(trialApplications).omit({
-  id: true,
-  status: true,
-  createdAt: true,
+export const insertTrialApplicationSchema = createInsertSchema(trialApplications, {
+  id: z.number().optional(),
+  status: z.string().optional(),
+  createdAt: z.date().optional(),
 });
 
 // Messages
-export const messages = pgTable("messages", {
-  id: serial("id").primaryKey(),
+export const messages = sqliteTable("messages", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
   senderId: integer("sender_id").notNull().references(() => users.id),
   receiverId: integer("receiver_id").notNull().references(() => users.id),
   content: text("content").notNull(),
-  isRead: boolean("is_read").default(false),
-  createdAt: timestamp("created_at").defaultNow(),
+  isRead: integer("is_read", { mode: "boolean" }).default(false),
+  createdAt: integer("created_at", { mode: "timestamp" }).$defaultFn(() => new Date()),
 });
 
-export const insertMessageSchema = createInsertSchema(messages).omit({
-  id: true,
-  isRead: true,
-  createdAt: true,
+export const insertMessageSchema = createInsertSchema(messages, {
+  id: z.number().optional(),
+  isRead: z.boolean().optional(),
+  createdAt: z.date().optional(),
 });
 
 // Scout Interests
-export const scoutInterests = pgTable("scout_interests", {
-  id: serial("id").primaryKey(),
+export const scoutInterests = sqliteTable("scout_interests", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
   scoutId: integer("scout_id").notNull().references(() => users.id),
   playerId: integer("player_id").notNull().references(() => users.id),
   type: text("type").notNull(), // viewed_profile, watched_video, added_to_watchlist, etc.
   resourceId: integer("resource_id"), // can reference a video ID or other resource
-  createdAt: timestamp("created_at").defaultNow(),
+  createdAt: integer("created_at", { mode: "timestamp" }).$defaultFn(() => new Date()),
 });
 
-export const insertScoutInterestSchema = createInsertSchema(scoutInterests).omit({
-  id: true,
-  createdAt: true,
+export const insertScoutInterestSchema = createInsertSchema(scoutInterests, {
+  id: z.number().optional(),
+  createdAt: z.date().optional(),
 });
 
 // Player Stats interface (for the JSON column)
@@ -216,12 +222,19 @@ export const loginSchema = z.object({
 
 export type LoginData = z.infer<typeof loginSchema>;
 
-// Registration schema with role validation
-export const registerSchema = insertUserSchema.extend({
+// Registration schema (simplified)
+export const registerSchema = z.object({
+  email: z.string().email(),
+  password: z.string().min(6),
   confirmPassword: z.string().min(6),
+  firstName: z.string().min(1),
+  lastName: z.string().min(1),
+  termsAccepted: z.boolean().refine(val => val === true, {
+    message: "You must accept the terms and conditions"
+  })
 }).refine(data => data.password === data.confirmPassword, {
-  message: "Passwords do not match",
-  path: ["confirmPassword"],
+  message: "Passwords don't match",
+  path: ["confirmPassword"]
 });
 
 export type RegisterData = z.infer<typeof registerSchema>;

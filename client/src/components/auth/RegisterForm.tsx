@@ -9,16 +9,23 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { useAuth } from "@/lib/authContext";
 import { Link } from "wouter";
-import { registerSchema, USER_ROLES } from "@shared/schema";
+import { registerSchema, RegisterData } from "@shared/schema";
 import { Progress } from "@/components/ui/progress";
 import { FaUserGraduate, FaSearch, FaBuilding } from "react-icons/fa";
 
-// Create form schema based on registerSchema
+// Create form schema without role selection
 const formSchema = z.object({
-  ...registerSchema.shape,
+  firstName: z.string().min(1, "First name is required"),
+  lastName: z.string().min(1, "Last name is required"),
+  email: z.string().email("Invalid email address"),
+  password: z.string().min(6, "Password must be at least 6 characters"),
+  confirmPassword: z.string().min(6, "Password must be at least 6 characters"),
   termsAccepted: z.boolean().refine(val => val === true, {
     message: "You must accept the terms and conditions",
   }),
+}).refine(data => data.password === data.confirmPassword, {
+  message: "Passwords do not match",
+  path: ["confirmPassword"],
 });
 
 type RegisterFormValues = z.infer<typeof formSchema>;
@@ -36,9 +43,9 @@ export function RegisterForm() {
       email: "",
       password: "",
       confirmPassword: "",
-      role: USER_ROLES.PLAYER,
       termsAccepted: false,
     },
+    mode: "onChange", // Enable validation on change
   });
 
   const calculatePasswordStrength = (password: string) => {
@@ -79,19 +86,21 @@ export function RegisterForm() {
   const onPasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const password = e.target.value;
     setPasswordStrength(calculatePasswordStrength(password));
-    form.setValue("password", password);
+    form.setValue("password", password, { shouldValidate: true });
   };
 
   const onSubmit = async (data: RegisterFormValues) => {
     try {
       setError(null);
-      await register(data);
+      const { termsAccepted, confirmPassword, ...rest } = data;
+      await register({
+        ...rest,
+        role: "player" // Default role, can be changed later
+      });
     } catch (err: any) {
       setError(err.message || "Registration failed. Please try again.");
     }
   };
-
-  const selectedRole = form.watch("role");
 
   return (
     <Card className="w-full max-w-4xl">
@@ -102,82 +111,6 @@ export function RegisterForm() {
       <CardContent className="p-8">
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-            <div className="mb-8">
-              <h3 className="text-lg font-semibold mb-4">Select your role</h3>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <FormField
-                  control={form.control}
-                  name="role"
-                  render={({ field }) => (
-                    <>
-                      <div
-                        className={`border-2 rounded-lg p-4 flex flex-col items-center text-center cursor-pointer transition-all ${
-                          field.value === USER_ROLES.PLAYER
-                            ? "border-primary bg-primary bg-opacity-5"
-                            : "border-gray-200 hover:border-primary hover:bg-primary hover:bg-opacity-5"
-                        }`}
-                        onClick={() => form.setValue("role", USER_ROLES.PLAYER)}
-                      >
-                        <div className={`w-16 h-16 rounded-full flex items-center justify-center mb-3 ${
-                          field.value === USER_ROLES.PLAYER
-                            ? "bg-primary bg-opacity-10"
-                            : "bg-gray-100"
-                        }`}>
-                          <FaUserGraduate className={`text-xl ${
-                            field.value === USER_ROLES.PLAYER ? "text-primary" : "text-gray-500"
-                          }`} />
-                        </div>
-                        <h4 className="font-medium">Player</h4>
-                        <p className="text-sm text-gray-600 mt-1">Showcase your skills to scouts worldwide</p>
-                      </div>
-
-                      <div
-                        className={`border-2 rounded-lg p-4 flex flex-col items-center text-center cursor-pointer transition-all ${
-                          field.value === USER_ROLES.SCOUT
-                            ? "border-primary bg-primary bg-opacity-5"
-                            : "border-gray-200 hover:border-primary hover:bg-primary hover:bg-opacity-5"
-                        }`}
-                        onClick={() => form.setValue("role", USER_ROLES.SCOUT)}
-                      >
-                        <div className={`w-16 h-16 rounded-full flex items-center justify-center mb-3 ${
-                          field.value === USER_ROLES.SCOUT
-                            ? "bg-primary bg-opacity-10"
-                            : "bg-gray-100"
-                        }`}>
-                          <FaSearch className={`text-xl ${
-                            field.value === USER_ROLES.SCOUT ? "text-primary" : "text-gray-500"
-                          }`} />
-                        </div>
-                        <h4 className="font-medium">Scout/Agent</h4>
-                        <p className="text-sm text-gray-600 mt-1">Discover talent and manage recruitment</p>
-                      </div>
-
-                      <div
-                        className={`border-2 rounded-lg p-4 flex flex-col items-center text-center cursor-pointer transition-all ${
-                          field.value === USER_ROLES.ACADEMY
-                            ? "border-primary bg-primary bg-opacity-5"
-                            : "border-gray-200 hover:border-primary hover:bg-primary hover:bg-opacity-5"
-                        }`}
-                        onClick={() => form.setValue("role", USER_ROLES.ACADEMY)}
-                      >
-                        <div className={`w-16 h-16 rounded-full flex items-center justify-center mb-3 ${
-                          field.value === USER_ROLES.ACADEMY
-                            ? "bg-primary bg-opacity-10"
-                            : "bg-gray-100"
-                        }`}>
-                          <FaBuilding className={`text-xl ${
-                            field.value === USER_ROLES.ACADEMY ? "text-primary" : "text-gray-500"
-                          }`} />
-                        </div>
-                        <h4 className="font-medium">Academy Admin</h4>
-                        <p className="text-sm text-gray-600 mt-1">Post trials and manage development</p>
-                      </div>
-                    </>
-                  )}
-                />
-              </div>
-            </div>
-
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <FormField
                 control={form.control}
@@ -215,12 +148,7 @@ export function RegisterForm() {
                 <FormItem>
                   <FormLabel>Email</FormLabel>
                   <FormControl>
-                    <Input 
-                      placeholder="Enter your email" 
-                      {...field} 
-                      type="email"
-                      autoComplete="email"
-                    />
+                    <Input placeholder="Enter your email" type="email" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -234,26 +162,8 @@ export function RegisterForm() {
                 <FormItem>
                   <FormLabel>Password</FormLabel>
                   <FormControl>
-                    <Input 
-                      placeholder="Create a password" 
-                      type="password" 
-                      {...field}
-                      onChange={onPasswordChange}
-                    />
+                    <Input placeholder="Create a password" type="password" {...field} />
                   </FormControl>
-                  <div className="mt-2">
-                    <div className="flex items-center justify-between mb-1">
-                      <div className="text-xs text-gray-500">Password strength:</div>
-                      <div className={`text-xs font-medium ${
-                        passwordStrength < 30 ? "text-red-500" : 
-                        passwordStrength < 60 ? "text-yellow-500" : "text-green-500"
-                      }`}>
-                        {getStrengthText(passwordStrength)}
-                      </div>
-                    </div>
-                    <Progress value={passwordStrength} className="h-1 bg-gray-200" 
-                      indicatorClassName={getStrengthColor(passwordStrength)} />
-                  </div>
                   <FormMessage />
                 </FormItem>
               )}
@@ -285,7 +195,10 @@ export function RegisterForm() {
                   <FormControl>
                     <Checkbox 
                       checked={field.value} 
-                      onCheckedChange={field.onChange} 
+                      onCheckedChange={(checked) => {
+                        field.onChange(checked);
+                        form.trigger("termsAccepted");
+                      }} 
                       id="termsAccepted"
                     />
                   </FormControl>

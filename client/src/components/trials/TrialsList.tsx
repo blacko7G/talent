@@ -12,18 +12,41 @@ import {
 } from "@/components/ui/select";
 import { FaSearch, FaFilter, FaMapMarkerAlt } from "react-icons/fa";
 
+// Define types for the data
+interface Trial {
+  id: number;
+  title: string;
+  organization: string;
+  location: string;
+  position?: string;
+  [key: string]: any;
+}
+
+interface Application {
+  trialId: number;
+  [key: string]: any;
+}
+
+interface TrialsResponse {
+  trials: Trial[];
+}
+
+interface ApplicationsResponse {
+  applications: Application[];
+}
+
 export default function TrialsList() {
   const [searchTerm, setSearchTerm] = useState("");
   const [positionFilter, setPositionFilter] = useState("");
   const [locationFilter, setLocationFilter] = useState("");
   
   // Fetch trials
-  const { data: trialsData, isLoading } = useQuery({
+  const { data: trialsData, isLoading } = useQuery<TrialsResponse>({
     queryKey: ['/api/trials'],
   });
 
   // Fetch player's trial applications to filter out already applied trials
-  const { data: applicationsData, isLoading: isApplicationsLoading } = useQuery({
+  const { data: applicationsData, isLoading: isApplicationsLoading } = useQuery<ApplicationsResponse>({
     queryKey: ['/api/applications/player'],
   });
 
@@ -31,10 +54,10 @@ export default function TrialsList() {
   const applications = applicationsData?.applications || [];
   
   // Get IDs of trials the player has already applied to
-  const appliedTrialIds = applications.map((app: any) => app.trialId);
+  const appliedTrialIds = applications.map((app: Application) => app.trialId);
   
   // Filter trials
-  const filteredTrials = trials.filter((trial: any) => {
+  const filteredTrials = trials.filter((trial: Trial) => {
     // Search term filter
     const matchesSearch = 
       searchTerm === "" || 
@@ -44,22 +67,22 @@ export default function TrialsList() {
     
     // Position filter
     const matchesPosition = 
-      positionFilter === "" || 
+      positionFilter === "" || positionFilter === "all" || 
       (trial.position && trial.position.toLowerCase() === positionFilter.toLowerCase());
     
     // Location filter
     const matchesLocation = 
-      locationFilter === "" || 
+      locationFilter === "" || locationFilter === "all" || 
       (trial.location && trial.location.toLowerCase().includes(locationFilter.toLowerCase()));
     
     return matchesSearch && matchesPosition && matchesLocation;
   });
   
   // Available positions (derived from trials data)
-  const positions = [...new Set(trials.map((trial: any) => trial.position))].filter(Boolean);
+  const positions = Array.from(new Set(trials.map((trial: Trial) => trial.position))).filter(Boolean) as string[];
   
   // Available locations (derived from trials data)
-  const locations = [...new Set(trials.map((trial: any) => trial.location))].filter(Boolean);
+  const locations = Array.from(new Set(trials.map((trial: Trial) => trial.location))).filter(Boolean) as string[];
 
   if (isLoading || isApplicationsLoading) {
     return (
@@ -94,7 +117,7 @@ export default function TrialsList() {
                 <SelectValue placeholder="Filter by position" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All Positions</SelectItem>
+                <SelectItem value="all">All Positions</SelectItem>
                 {positions.map((position: string) => (
                   <SelectItem key={position} value={position}>
                     {position}
@@ -113,7 +136,7 @@ export default function TrialsList() {
                 </div>
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All Locations</SelectItem>
+                <SelectItem value="all">All Locations</SelectItem>
                 {locations.map((location: string) => (
                   <SelectItem key={location} value={location}>
                     {location}
@@ -152,7 +175,7 @@ export default function TrialsList() {
       {/* Trials Grid */}
       {filteredTrials.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredTrials.map((trial: any) => (
+          {filteredTrials.map((trial: Trial) => (
             <TrialCard 
               key={trial.id} 
               trial={trial} 

@@ -118,7 +118,11 @@ export function LoginForm() {
               <div className="text-sm text-red-500 font-medium">{error}</div>
             )}
 
-            <Button type="submit" className="w-full" disabled={isLoading}>
+            <Button 
+              type="submit" 
+              className="w-full bg-black text-white hover:bg-white hover:text-black transition-colors" 
+              disabled={isLoading}
+            >
               {isLoading ? "Signing in..." : "Sign In"}
             </Button>
 

@@ -3,19 +3,22 @@ import {
   ScoutProfile, InsertScoutProfile, AcademyProfile, InsertAcademyProfile,
   Video, InsertVideo, Trial, InsertTrial, TrialApplication, InsertTrialApplication,
   Message, InsertMessage, ScoutInterest, InsertScoutInterest,
-  USER_ROLES, LoginData,
+  USER_ROLES, LoginData, UserRole, PlayerStats,
   // Database tables
   users, playerProfiles, scoutProfiles, academyProfiles, videos, 
   trials, trialApplications, messages, scoutInterests
 } from "@shared/schema";
 import { eq, and, or } from "drizzle-orm";
 import { db } from "./db";
+import { storage as localStorage, STORAGE_KEYS } from '@/lib/storage';
+import bcrypt from 'bcrypt';
 
 export interface IStorage {
   // Users
   getUser(id: number): Promise<User | undefined>;
   getUserByEmail(email: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
+  updateUserRole(id: number, role: UserRole): Promise<User | undefined>;
 
   // Player Profiles
   getPlayerProfile(userId: number): Promise<PlayerProfile | undefined>;
@@ -80,9 +83,16 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createUser(insertUser: InsertUser): Promise<User> {
+    // Hash the password before storing
+    const hashedPassword = await bcrypt.hash(insertUser.password, 10);
+    
     const [user] = await db
       .insert(users)
-      .values(insertUser)
+      .values({
+        ...insertUser,
+        password: hashedPassword,
+        role: insertUser.role || USER_ROLES.PLAYER // Set default role if not provided
+      })
       .returning();
     return user;
   }
@@ -93,10 +103,18 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createPlayerProfile(profile: InsertPlayerProfile): Promise<PlayerProfile> {
+    // Create a clean copy of the profile without the stats field
+    const { stats, ...profileWithoutStats } = profile;
+    
+    // Insert the profile with stats as null if not provided
     const [playerProfile] = await db
       .insert(playerProfiles)
-      .values(profile)
+      .values({
+        ...profileWithoutStats,
+        stats: stats as PlayerStats || null
+      })
       .returning();
+    
     return playerProfile;
   }
 
@@ -108,9 +126,16 @@ export class DatabaseStorage implements IStorage {
     
     if (!existingProfile) return undefined;
     
+    // Create a clean copy of the profile without the stats field
+    const { stats, ...profileWithoutStats } = profile;
+    
+    // Update the profile with stats if provided
     const [updatedProfile] = await db
       .update(playerProfiles)
-      .set(profile)
+      .set({
+        ...profileWithoutStats,
+        ...(stats !== undefined ? { stats: stats as PlayerStats } : {})
+      })
       .where(eq(playerProfiles.userId, userId))
       .returning();
     
@@ -346,14 +371,49 @@ export class DatabaseStorage implements IStorage {
   }
 
   async validateCredentials(loginData: LoginData): Promise<User | undefined> {
-    const { email, password } = loginData;
-    const [user] = await db
+    try {
+      const { email, password } = loginData;
+      
+      // First find the user by email
+      const [user] = await db
+        .select()
+        .from(users)
+        .where(eq(users.email, email));
+      
+      if (!user) {
+        return undefined;
+      }
+      
+      // Compare the provided password with the stored hash
+      const isValid = await bcrypt.compare(password, user.password);
+      
+      if (!isValid) {
+        return undefined;
+      }
+      
+      return user;
+    } catch (error) {
+      console.error('Error validating credentials:', error);
+      return undefined;
+    }
+  }
+
+  async updateUserRole(id: number, role: UserRole): Promise<User | undefined> {
+    const [existingUser] = await db
       .select()
       .from(users)
-      .where(and(eq(users.email, email), eq(users.password, password)));
+      .where(eq(users.id, id));
     
-    return user || undefined;
+    if (!existingUser) return undefined;
+    
+    const [updatedUser] = await db
+      .update(users)
+      .set({ role })
+      .where(eq(users.id, id))
+      .returning();
+    
+    return updatedUser;
   }
 }
 
-export const storage = new DatabaseStorage();
+export const dbStorage = new DatabaseStorage();

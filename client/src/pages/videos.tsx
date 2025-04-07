@@ -1,36 +1,55 @@
-import { DashboardLayout } from "@/components/layout/DashboardLayout";
-import { useAuth } from "@/lib/authContext";
-import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { 
-  Select, 
-  SelectContent, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue 
-} from "@/components/ui/select";
-import { FaPlus, FaSort } from "react-icons/fa";
-import { Link, useRoute } from "wouter";
 import { useState } from "react";
+import { useAuth } from "@/lib/authContext";
 import { useQuery } from "@tanstack/react-query";
-import HighlightsList from "@/components/video/HighlightsList";
-import UploadHighlight from "@/components/profile/UploadHighlight";
-import VideoPlayer from "@/components/video/VideoPlayer";
+import { useRoute, useLocation } from "wouter";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { DashboardLayout } from "@/components/layout/DashboardLayout";
+import { UploadHighlight } from "@/components/upload-highlight";
+import { VideoPlayer } from "@/components/video-player";
+import { VideoGrid } from "@/components/video-grid";
+import { Link } from "wouter";
 
-export default function Videos({ videoId }: { videoId?: string }) {
+interface Video {
+  id: string;
+  title: string;
+  description: string;
+  userId: string;
+  url: string;
+}
+
+interface User {
+  id: string;
+  name: string;
+  email: string;
+  avatar?: string;
+}
+
+interface VideoResponse {
+  video: Video;
+}
+
+interface UserResponse {
+  user: User;
+}
+
+export default function Videos() {
   const { user } = useAuth();
   const [sortBy, setSortBy] = useState("newest");
-  const [isVideoRoute] = useRoute("/videos/:id");
+  const [, params] = useRoute("/videos/:id");
   const [isUploadRoute] = useRoute("/videos/upload");
+  const videoId = params?.id;
   
   // Fetch specific video if ID is provided
-  const { data: videoData, isLoading: isVideoLoading } = useQuery({
+  const { data: videoData, isLoading: isVideoLoading } = useQuery<VideoResponse>({
     queryKey: [`/api/videos/${videoId}`],
     enabled: !!videoId,
   });
   
   // Fetch user who uploaded the video (if viewing a specific video)
-  const { data: userData, isLoading: isUserLoading } = useQuery({
+  const { data: userData, isLoading: isUserLoading } = useQuery<UserResponse>({
     queryKey: [`/api/users/${videoData?.video?.userId}`],
     enabled: !!videoData?.video?.userId,
   });
@@ -52,30 +71,24 @@ export default function Videos({ videoId }: { videoId?: string }) {
   }
   
   // If viewing a specific video
-  if (isVideoRoute && videoId) {
-    const video = videoData?.video;
-    const videoOwner = userData?.user;
-    
-    const isLoading = isVideoLoading || isUserLoading;
-    
-    if (isLoading) {
+  if (videoId) {
+    if (isVideoLoading || isUserLoading) {
       return (
         <DashboardLayout>
-          <div className="text-center py-12">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
-            <p className="mt-4 text-gray-600">Loading video...</p>
+          <div className="flex items-center justify-center h-64">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
           </div>
         </DashboardLayout>
       );
     }
     
-    if (!video) {
+    if (!videoData?.video) {
       return (
         <DashboardLayout>
           <div className="text-center py-12">
-            <h2 className="text-xl font-bold text-gray-900 mb-2">Video Not Found</h2>
-            <p className="text-gray-600 mb-4">The video you're looking for doesn't exist or has been removed.</p>
-            <Button asChild>
+            <h2 className="text-2xl font-bold text-gray-900">Video not found</h2>
+            <p className="mt-2 text-gray-600">The video you're looking for doesn't exist or has been removed.</p>
+            <Button className="mt-4" asChild>
               <Link href="/videos">Back to Videos</Link>
             </Button>
           </div>
@@ -85,78 +98,41 @@ export default function Videos({ videoId }: { videoId?: string }) {
     
     return (
       <DashboardLayout>
-        <div className="flex justify-between items-center mb-6">
-          <div>
-            <Button variant="outline" asChild className="mb-2">
-              <Link href="/videos">&larr; Back to Videos</Link>
+        <div className="space-y-6">
+          <div className="flex justify-between items-center">
+            <h1 className="text-2xl font-bold text-gray-900">{videoData.video.title}</h1>
+            <Button variant="outline" asChild>
+              <Link href="/videos">Back to Videos</Link>
             </Button>
-            <h1 className="text-2xl font-bold text-gray-900">{video.title}</h1>
-          </div>
-        </div>
-        
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2 space-y-6">
-            <VideoPlayer video={video} />
-            
-            <div className="bg-white rounded-lg p-6 shadow-card">
-              <h2 className="text-xl font-bold mb-2">Description</h2>
-              <p className="text-gray-700">{video.description || "No description provided."}</p>
-            </div>
           </div>
           
-          <div className="space-y-6">
-            <div className="bg-white rounded-lg p-6 shadow-card">
-              <h2 className="text-lg font-bold mb-4">Uploaded by</h2>
-              <div className="flex items-center">
-                <div className="h-12 w-12 rounded-full bg-gray-200 mr-3 flex items-center justify-center overflow-hidden">
-                  {videoOwner?.profileImage ? (
-                    <img 
-                      src={videoOwner.profileImage} 
-                      alt={`${videoOwner.firstName} ${videoOwner.lastName}`} 
-                      className="h-full w-full object-cover"
+          <VideoPlayer video={videoData.video} />
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="md:col-span-2">
+              <Card className="p-6">
+                <h2 className="text-xl font-semibold mb-4">Description</h2>
+                <p className="text-gray-600">{videoData.video.description}</p>
+              </Card>
+            </div>
+            
+            <div>
+              <Card className="p-6">
+                <h2 className="text-xl font-semibold mb-4">Uploaded by</h2>
+                {userData?.user && (
+                  <div className="flex items-center space-x-4">
+                    <img
+                      src={userData.user.avatar || "/default-avatar.png"}
+                      alt={userData.user.name}
+                      className="w-12 h-12 rounded-full"
                     />
-                  ) : (
-                    <div className="font-bold text-gray-500">
-                      {videoOwner?.firstName?.[0]}{videoOwner?.lastName?.[0]}
+                    <div>
+                      <p className="font-medium">{userData.user.name}</p>
+                      <p className="text-sm text-gray-500">{userData.user.email}</p>
                     </div>
-                  )}
-                </div>
-                <div>
-                  <p className="font-medium">{videoOwner?.firstName} {videoOwner?.lastName}</p>
-                  <Button variant="link" className="p-0 h-auto text-primary" asChild>
-                    <Link href={`/discover/${videoOwner?.id}`}>View Profile</Link>
-                  </Button>
-                </div>
-              </div>
-            </div>
-            
-            <div className="bg-white rounded-lg p-6 shadow-card">
-              <h2 className="text-lg font-bold mb-4">Video Details</h2>
-              <div className="space-y-2">
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Duration:</span>
-                  <span>{Math.floor(video.duration / 60)}:{String(video.duration % 60).padStart(2, '0')}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Views:</span>
-                  <span>{video.views}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Likes:</span>
-                  <span>{video.likes}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Uploaded:</span>
-                  <span>{new Date(video.createdAt).toLocaleDateString()}</span>
-                </div>
-              </div>
-            </div>
-            
-            <div className="bg-white rounded-lg p-6 shadow-card">
-              <h2 className="text-lg font-bold mb-4">More from {videoOwner?.firstName}</h2>
-              <div className="space-y-4">
-                <HighlightsList userId={video.userId} limit={2} />
-              </div>
+                  </div>
+                )}
+              </Card>
             </div>
           </div>
         </div>
@@ -164,68 +140,36 @@ export default function Videos({ videoId }: { videoId?: string }) {
     );
   }
   
-  // Default videos list view
+  // Show video list/grid view
   return (
     <DashboardLayout>
-      <div className="flex justify-between items-center mb-6">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Highlight Videos</h1>
-          <p className="text-gray-600">Browse and discover football talent</p>
+      <div className="space-y-6">
+        <div className="flex justify-between items-center">
+          <h1 className="text-2xl font-bold text-gray-900">Videos</h1>
+          <Button asChild>
+            <Link href="/videos/upload">Upload Video</Link>
+          </Button>
         </div>
         
-        {user?.role === "player" && (
-          <Button asChild>
-            <Link href="/videos/upload" className="flex items-center">
-              <FaPlus className="mr-2" />
-              Upload Highlight
-            </Link>
-          </Button>
-        )}
-      </div>
-      
-      <div className="mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <Tabs defaultValue="all" className="w-full sm:w-auto">
-          <TabsList>
-            <TabsTrigger value="all">All Videos</TabsTrigger>
-            <TabsTrigger value="my">My Videos</TabsTrigger>
-            <TabsTrigger value="watched">Recently Watched</TabsTrigger>
-          </TabsList>
-        </Tabs>
-        
-        <div className="flex items-center w-full sm:w-auto">
+        <div className="flex items-center space-x-4">
+          <Input
+            placeholder="Search videos..."
+            className="max-w-sm"
+          />
           <Select value={sortBy} onValueChange={setSortBy}>
-            <SelectTrigger className="w-full sm:w-[180px]">
-              <div className="flex items-center">
-                <FaSort className="mr-2 text-gray-400" />
-                <SelectValue placeholder="Sort by" />
-              </div>
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="Sort by" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="newest">Newest First</SelectItem>
-              <SelectItem value="oldest">Oldest First</SelectItem>
-              <SelectItem value="most_viewed">Most Viewed</SelectItem>
-              <SelectItem value="most_liked">Most Liked</SelectItem>
+              <SelectItem value="newest">Newest</SelectItem>
+              <SelectItem value="oldest">Oldest</SelectItem>
+              <SelectItem value="title">Title</SelectItem>
             </SelectContent>
           </Select>
         </div>
+        
+        <VideoGrid />
       </div>
-      
-      <TabsContent value="all" className="mt-0">
-        <HighlightsList />
-      </TabsContent>
-      
-      <TabsContent value="my" className="mt-0">
-        <HighlightsList userId={user?.id} />
-      </TabsContent>
-      
-      <TabsContent value="watched" className="mt-0">
-        <div className="text-center py-8 border border-dashed border-gray-300 rounded-lg">
-          <h3 className="font-medium text-gray-700">No recently watched videos</h3>
-          <p className="text-gray-500 text-sm mt-1">
-            Videos you watch will appear here
-          </p>
-        </div>
-      </TabsContent>
     </DashboardLayout>
   );
 }
